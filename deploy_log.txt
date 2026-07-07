@@ -1,0 +1,18 @@
+﻿node.exe : (node:3944) [DEP0040] 
+DeprecationWarning: The `punycode` module is 
+deprecated. Please use a userland alternative 
+instead.
+En C:\Users\dxdx\AppData\Roaming\npm\firebase.ps1: 
+24 Carácter: 5
++     & "node$exe"  
+"$basedir/node_modules/firebase-tools/lib/bin/fireb 
+...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node: 
+   3944) [DE...native instead.:String) [], RemoteE  
+  xception
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-deprecation ...` to show where 
+the warning was created)

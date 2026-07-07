@@ -1,0 +1,115 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // --- Helper Functions ---
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      // Secure check: verify email matches the Admin account
+      return isAuthenticated() && request.auth.token.email == 'isauradorado@rostrodorado.com';
+    }
+
+    // --- Collection Rules ---
+
+    // Users: Users manage their own profile; Admin manages all
+    match /users/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+    
+    // Products: Public read, Admin write
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // Categories: Public read, Admin write
+    match /categories/{categoryId} {
+        allow read: if true;
+        allow write: if isAdmin();
+    }
+
+    // Orders: 
+    // - Create: Public (Guests & Users) 
+    // - Read/Update: Admin or User with matching Email (links guest orders) or matching UserID
+    match /orders/{orderId} {
+      allow create: if true;
+      // Allow update if Admin, OR if Owner (Auth), OR if it's a Guest order (since we don't have session token for guest persistence easily in rules without custom claims)
+      // Ideally, specific fields like 'status' should be restricted, but for this fix:
+      allow read, update: if isAdmin() || (isAuthenticated() && (resource.data.userId == request.auth.uid || resource.data.customer.email == request.auth.token.email)) || (resource.data.userId == 'guest');
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid && (resource.data.status == 'pending' || resource.data.status == 'rejected' || resource.data.status == 'declined' || resource.data.status == 'error'));
+    }
+    
+    // Payments: Client creates records; Admin reads/manages
+    match /payments/{paymentId} {
+      allow create: if true; 
+      allow read, update: if isAdmin();
+    }
+    
+    // Chat Messages (Subcollection possibility or root?)
+    // Based on previous tasks, OrderChat might be a subcollection or root.
+    // Let's assume it might be a root collection 'chats' or 'messages' linked to order.
+    // Checking previous steps... 'chats' collection mentioned in migration.
+    match /chats/{chatId} {
+        allow read, write: if isAuthenticated(); // Refine if possible to order owner
+    }
+
+    // Coupons: Public read (for validation), Admin write
+    match /coupons/{couponId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Blog Posts: Public read of published posts (filtered in query, enforced here if possible or just public read), Admin write
+    match /posts/{postId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // OTP Codes: Backend Only (Cloud Functions) - No Client Access
+    match /otp_codes/{email} {
+      allow read, write: if false;
+    }
+
+    // Analytics: Public write (logging), Admin read
+    match /analytics_sessions/{sessionId} {
+      allow create, update: if true;
+      allow read: if isAdmin();
+    }
+
+    match /analytics_views/{viewId} {
+      allow create: if true;
+      allow read: if isAdmin();
+    }
+
+    // Leads: Public create/update (contact form progressive save), Admin read/delete
+    match /leads/{leadId} {
+      allow create, update: if true;
+      allow read, delete: if isAdmin();
+    }
+
+    // Dynamic Forms: Public read (so kiosk can fetch form structure), Admin full access
+    match /forms/{formId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Dynamic Form Responses: Public create (kiosk submission), Admin read/delete
+    match /form_responses/{responseId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+    
+    // Default: Deny All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

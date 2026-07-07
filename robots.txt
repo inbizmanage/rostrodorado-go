@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /login
+Disallow: /register
+Disallow: /checkout
+Disallow: /verify-login
+Disallow: /mis-pedidos
+
+Sitemap: https://rostrodorado.com/sitemap.xml

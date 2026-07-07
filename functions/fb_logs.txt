@@ -1,0 +1,15 @@
+﻿2026-03-04T23:57:02.550107340Z D cronCheckAbandoned: Function execution started
+2026-03-04T23:57:02.553110Z ? cronCheckAbandoned: Running Abandoned Cart & Lead Check...
+2026-03-04T23:57:02.682533Z ? cronCheckAbandoned: Abandoned check complete. Emails sent: 0
+2026-03-04T23:57:02.683520468Z D cronCheckAbandoned: Function execution took 133 ms, finished with status: 'ok'
+2026-03-04T23:58:02.046804406Z D cronCheckAbandoned: Function execution started
+2026-03-04T23:58:02.051429Z ? cronCheckAbandoned: Running Abandoned Cart & Lead Check...
+2026-03-04T23:58:02.271543Z ? cronCheckAbandoned: Abandoned check complete. Emails sent: 0
+2026-03-04T23:58:02.272799452Z D cronCheckAbandoned: Function execution took 225 ms, finished with status: 'ok'
+2026-03-04T23:58:08.543672052Z D testWhatsApp: Function execution started
+2026-03-04T23:58:09.072478Z ? testWhatsApp: [WhatsApp] FAILED sending to 573008233037 | Status: 400 | Response:  {"error":{"message":"(#10) Application does not have permission for this action","type":"OAuthException","code":10,"error_data":{"messaging_product":"whatsapp","details":"There was a problem with the access token or permissions you are using for the API call."},"fbtrace_id":"AIzPeycZl6sH8miIScLlitp"}}
+2026-03-04T23:58:09.086368277Z D testWhatsApp: Function execution took 542 ms, finished with status code: 500
+2026-03-04T23:59:02.038831340Z D cronCheckAbandoned: Function execution started
+2026-03-04T23:59:02.041931Z ? cronCheckAbandoned: Running Abandoned Cart & Lead Check...
+2026-03-04T23:59:02.147320Z ? cronCheckAbandoned: Abandoned check complete. Emails sent: 0
+2026-03-04T23:59:02.148097588Z D cronCheckAbandoned: Function execution took 109 ms, finished with status: 'ok'

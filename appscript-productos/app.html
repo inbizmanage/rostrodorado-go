@@ -1,0 +1,374 @@
+<!-- Alpine.js -->
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+<script>
+  function app() {
+    return {
+      productos: [],
+      search: '',
+      seleccionado: null,
+      isLoading: true,
+      isSaving: false,
+      isSyncing: false,
+      isUploading: false,
+      toasts: [],
+      
+      get filteredProductos() {
+        const prods = this.productos || [];
+        if (!this.search) return prods;
+        
+        const s = this.search.toLowerCase();
+        return prods.filter(p => 
+          (p['PRODUCTO'] || '').toLowerCase().includes(s) || 
+          (p['Marca'] || '').toLowerCase().includes(s)
+        );
+      },
+
+      get precioFinal() {
+        if (!this.seleccionado) return 0;
+        const base = Number(this.seleccionado['Precio Base'] || 0);
+        if (base === 0) return 0;
+        return Math.round((base + 833) / (1 - 0.031535));
+      },
+
+      get recargoWompi() {
+        if (!this.seleccionado) return 0;
+        const base = Number(this.seleccionado['Precio Base'] || 0);
+        if (base === 0) return 0;
+        return this.precioFinal - base;
+      },
+
+      get gananciaNeta() {
+        if (!this.seleccionado) return 0;
+        const base = Number(this.seleccionado['Precio Base'] || 0);
+        const costo = Number(this.seleccionado['Precio Costo + IVA'] || 0);
+        return base - costo;
+      },
+
+      isChatOpen: false,
+      chatMessages: [],
+      chatInput: '',
+      isAlexTyping: false,
+
+      abrirChat() {
+        this.isChatOpen = true;
+        // Si no hay mensajes, mandamos el contexto inicial
+        if (this.chatMessages.length === 0) {
+          const prodName = this.seleccionado?.['PRODUCTO'] || 'este producto';
+          this.chatMessages.push({
+            role: 'system',
+            content: `Eres Alex, el asistente experto en belleza de Rostro Dorado. El usuario está editando el producto "${prodName}". Tu objetivo es buscar info en internet (ingredientes, beneficios, modo de uso, imagen) y ayudar a rellenar el formulario. Cuando tengas los datos claros, responde ÚNICAMENTE con un bloque de código JSON con estas claves exactas: "Descripcion Corta", "Descripcion Larga", "Ingredientes", "Modo Uso", "Beneficios", "Categoria Principal", "Subcategoria", "Detalle Categoria", "Imagen Principal". Responde primero con texto, y al final el bloque JSON.`
+          });
+          this.chatMessages.push({
+            role: 'assistant',
+            content: `¡Hola! Soy Alex. Estoy aquí para ayudarte a redactar la información para **${prodName}**. ¿Quieres que investigue sus ingredientes y beneficios y te proponga un texto listo para aplicar?`
+          });
+        }
+      },
+
+      enviarMensajeAlex() {
+        if (!this.chatInput.trim() || this.isAlexTyping) return;
+        
+        const userInput = this.chatInput.trim();
+        this.chatMessages.push({ role: 'user', content: userInput });
+        this.chatInput = '';
+        this.isAlexTyping = true;
+
+        this.$nextTick(() => {
+          const container = document.getElementById('chat-container');
+          if (container) container.scrollTop = container.scrollHeight;
+        });
+
+        const productName = this.seleccionado?.['PRODUCTO'] || '';
+        
+        google.script.run
+          .withSuccessHandler(res => {
+            this.isAlexTyping = false;
+            if (res.error) {
+              this.showToast('Error de Alex: ' + res.error, 'error');
+              return;
+            }
+            
+            let responseText = res.content || '';
+            let hasJson = false;
+            let jsonData = null;
+            let textPart = responseText;
+
+            const jsonRegex = /```(?:json)?\n([\s\S]*?)\n```/;
+            const match = responseText.match(jsonRegex);
+            
+            if (match && match[1]) {
+              try {
+                jsonData = JSON.parse(match[1].trim());
+                hasJson = true;
+                textPart = responseText.replace(match[0], '').trim();
+              } catch (e) {
+                console.error("Error parseando JSON de Alex", e);
+              }
+            }
+
+            this.chatMessages.push({
+              role: 'assistant',
+              content: responseText,
+              hasJson: hasJson,
+              jsonData: jsonData,
+              textPart: textPart
+            });
+
+            this.$nextTick(() => {
+              const container = document.getElementById('chat-container');
+              if (container) container.scrollTop = container.scrollHeight;
+            });
+          })
+          .withFailureHandler(err => {
+            this.isAlexTyping = false;
+            this.showToast('Error de conexión con Alex', 'error');
+          })
+          .askAlex(this.chatMessages.map(m => ({ role: m.role, content: m.content })), productName);
+      },
+
+      aplicarDatosJson(data) {
+        if (!data || !this.seleccionado) return;
+        
+        const campos = ["Descripcion Corta", "Descripcion Larga", "Ingredientes", "Modo Uso", "Beneficios", "Categoria Principal", "Subcategoria", "Detalle Categoria", "Imagen Principal"];
+        let aplicados = 0;
+        
+        campos.forEach(campo => {
+          if (data[campo] !== undefined) {
+            this.seleccionado[campo] = data[campo];
+            aplicados++;
+          }
+        });
+        
+        this.showToast(`Se aplicaron ${aplicados} campos al formulario.`, 'success');
+        this.isChatOpen = false;
+      },
+
+      init() {
+        this.cargar();
+      },
+
+      cargar() {
+        this.isLoading = true;
+        google.script.run
+          .withSuccessHandler(data => {
+            // Aseguramos que data sea un array válido
+            this.productos = data || [];
+            this.isLoading = false;
+          })
+          .withFailureHandler(err => {
+            this.showToast('Error al cargar datos', 'error');
+            this.productos = []; // Fallback seguro
+            this.isLoading = false;
+          })
+          .obtenerProductos();
+      },
+
+      sincronizar() {
+        this.isSyncing = true;
+        this.showToast('Sincronizando con hoja de inventario...', 'success');
+        
+        google.script.run
+          .withSuccessHandler(res => {
+            this.isSyncing = false;
+            this.showToast(`Éxito: ${res.stats.creados} creados, ${res.stats.actualizados} actualizados, ${res.stats.agotados} agotados.`, 'success');
+            this.cargar(); 
+          })
+          .withFailureHandler(err => {
+            this.isSyncing = false;
+            this.showToast('Error al sincronizar: ' + err.message, 'error');
+          })
+          .sincronizarInventario(false);
+      },
+
+      seleccionar(prod) {
+        // Copia profunda para editar sin mutar la lista original
+        this.seleccionado = JSON.parse(JSON.stringify(prod));
+      },
+
+      nuevoProducto() {
+        this.seleccionado = {
+          "ID": "",
+          "PRODUCTO": "",
+          "Marca": "",
+          "Categoria Principal": "",
+          "Subcategoria": "",
+          "Detalle Categoria": "",
+          "CANTIDAD": 0,
+          "Precio Costo + IVA": 0,
+          "Precio De Venta": 0,
+          "Precio Base": 0,
+          "Descripcion Corta": "",
+          "Descripcion Larga": "",
+          "Ingredientes": "",
+          "Modo Uso": "",
+          "Beneficios": "",
+          "Peso (kg)": 1,
+          "Ancho (cm)": 10,
+          "Alto (cm)": 10,
+          "Largo (cm)": 10,
+          "Imagen Principal": "",
+          "Galeria (URLs)": ""
+        };
+      },
+
+      guardar() {
+        if (!this.seleccionado['PRODUCTO']) {
+          this.showToast('El nombre del producto es obligatorio', 'error');
+          return;
+        }
+        
+        // Guardar automáticamente el precio final calculado
+        this.seleccionado['Precio De Venta'] = this.precioFinal;
+        
+        this.isSaving = true;
+        
+        google.script.run
+          .withSuccessHandler(res => {
+            this.isSaving = false;
+            this.showToast('Producto guardado exitosamente', 'success');
+            
+            if (res.action === 'created') {
+              this.productos.unshift(res.product);
+              this.seleccionado = res.product;
+            } else {
+              const idx = this.productos.findIndex(p => p.ID === res.product.ID);
+              if (idx > -1) this.productos[idx] = res.product;
+            }
+          })
+          .withFailureHandler(err => {
+            this.isSaving = false;
+            this.showToast('Error al guardar: ' + err.message, 'error');
+          })
+          .guardarProducto(this.seleccionado);
+      },
+
+      eliminar() {
+        if (!confirm('¿Estás seguro de que deseas eliminar este producto de la hoja de cálculo?')) return;
+        
+        this.isSaving = true;
+        google.script.run
+          .withSuccessHandler(() => {
+            this.isSaving = false;
+            this.showToast('Producto eliminado', 'success');
+            this.productos = this.productos.filter(p => p.ID !== this.seleccionado.ID);
+            this.seleccionado = null;
+          })
+          .withFailureHandler(err => {
+            this.isSaving = false;
+            this.showToast('Error al eliminar', 'error');
+          })
+          .eliminarProducto(this.seleccionado.ID);
+      },
+
+      subirImagen(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const productName = this.seleccionado['PRODUCTO'];
+        if (!productName) {
+          this.showToast('Ponle un nombre al producto primero antes de subir su foto', 'error');
+          event.target.value = '';
+          return;
+        }
+
+        this.isUploading = true;
+        this.showToast('Subiendo imagen a Google Drive...', 'success');
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const base64Data = e.target.result;
+          const mimeType = file.type;
+          // Construir un nombre de archivo bonito: "Sérum Hialurónico.png"
+          const extension = file.name.split('.').pop();
+          const fileName = productName + '.' + extension;
+
+          google.script.run
+            .withSuccessHandler(res => {
+              this.isUploading = false;
+              if (res.success) {
+                this.seleccionado['Imagen Principal'] = res.url;
+                this.showToast('Imagen subida con éxito', 'success');
+              } else {
+                this.showToast('Error al subir: ' + res.error, 'error');
+              }
+            })
+            .withFailureHandler(err => {
+              this.isUploading = false;
+              this.showToast('Error de conexión', 'error');
+            })
+            .subirImagenDrive(base64Data, mimeType, fileName);
+        };
+        reader.readAsDataURL(file);
+      },
+
+      async subirGaleria(event) {
+        const files = event.target.files;
+        if (!files || files.length === 0) return;
+        
+        const productName = this.seleccionado['PRODUCTO'];
+        if (!productName) {
+          this.showToast('Ponle un nombre al producto primero', 'error');
+          event.target.value = '';
+          return;
+        }
+
+        this.isUploading = true;
+        this.showToast(`Subiendo ${files.length} imágenes a la galería...`, 'success');
+
+        let subidasExitosas = [];
+        let errores = 0;
+
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          try {
+            const base64Data = await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onload = (e) => resolve(e.target.result);
+              reader.readAsDataURL(file);
+            });
+            
+            const extension = file.name.split('.').pop();
+            const fileName = `${productName} - Galeria_${Date.now()}_${i}.${extension}`;
+            
+            const res = await new Promise((resolve, reject) => {
+              google.script.run
+                .withSuccessHandler(resolve)
+                .withFailureHandler(reject)
+                .subirImagenDrive(base64Data, file.type, fileName);
+            });
+
+            if (res.success) {
+              subidasExitosas.push(res.url);
+            } else {
+              errores++;
+            }
+          } catch (err) {
+            errores++;
+          }
+        }
+
+        this.isUploading = false;
+        
+        if (subidasExitosas.length > 0) {
+          let actuales = this.seleccionado['Galeria (URLs)'] ? this.seleccionado['Galeria (URLs)'].split(',').map(u => u.trim()).filter(u => u) : [];
+          this.seleccionado['Galeria (URLs)'] = [...actuales, ...subidasExitosas].join(', ');
+          this.showToast(`Se añadieron ${subidasExitosas.length} imágenes a la galería.`, 'success');
+        }
+        if (errores > 0) {
+          this.showToast(`Hubo ${errores} errores al subir.`, 'error');
+        }
+        
+        event.target.value = '';
+      },
+
+      showToast(message, type = 'success') {
+        const id = Date.now();
+        this.toasts.push({ id, message, type });
+        setTimeout(() => {
+          this.toasts = this.toasts.filter(t => t.id !== id);
+        }, 3000);
+      }
+    }
+  }
+</script>

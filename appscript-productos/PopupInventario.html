@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { gold: '#C6A87C' }
+        }
+      }
+    }
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    body { background-color: #111; color: white; font-family: sans-serif; overflow: hidden; }
+  </style>
+</head>
+<body class="bg-[#111] text-white p-4 h-full flex flex-col">
+
+  <div x-data="popupApp()" x-init="init()" class="flex-1 flex flex-col h-full">
+
+    <!-- Loading State -->
+    <div x-show="isLoading" class="flex-1 flex flex-col items-center justify-center space-y-4">
+      <div class="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin"></div>
+      <p class="text-sm text-white/60">Cargando catálogo...</p>
+    </div>
+
+    <!-- Error State -->
+    <div x-show="!isLoading && error" class="flex-1 flex flex-col items-center justify-center space-y-4 text-center">
+      <div class="text-red-400">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-alert-circle mx-auto mb-2"><circle cx="12" cy="12" r="10"></circle><line x1="12" x2="12" y1="8" y2="12"></line><line x1="12" x2="12.01" y1="16" y2="16"></line></svg>
+        <p x-text="error" class="text-sm px-4"></p>
+      </div>
+      <button @click="google.script.host.close()" class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm transition-colors">Cerrar ventana</button>
+    </div>
+
+    <!-- Main Content -->
+    <div x-show="!isLoading && !error" style="display: none;" class="flex-1 flex flex-col space-y-6">
+      
+      <!-- Selector de Producto -->
+      <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+        <label class="text-xs uppercase tracking-widest text-gold mb-2 block font-bold">Selecciona el Producto</label>
+        <select x-model="selectedIndex" @change="seleccionarProducto()" class="w-full bg-black/50 border border-white/20 rounded-lg px-3 py-2 text-sm text-white mb-3">
+          <option value="-1">-- Selecciona un producto --</option>
+          <template x-for="(prod, index) in productos" :key="index">
+            <option :value="index" x-text="prod.producto + (prod.marca ? ' (' + prod.marca + ')' : '')"></option>
+          </template>
+        </select>
+        
+        <div x-show="data.rowIndex !== null" class="grid grid-cols-2 gap-3 text-sm mt-3 pt-3 border-t border-white/10">
+          <div>
+            <span class="text-white/40 text-[10px] uppercase tracking-wider block">Fila Excel</span>
+            <span x-text="data.rowIndex"></span>
+          </div>
+          <div>
+            <span class="text-white/40 text-[10px] uppercase tracking-wider block">Stock</span>
+            <span x-text="data.cantidad"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Imagen Section -->
+      <div class="flex-1 transition-opacity duration-300" :class="data.rowIndex === null ? 'opacity-30 pointer-events-none' : 'opacity-100'">
+        <label class="text-xs uppercase tracking-widest text-white/50 block mb-2">Imagen del Producto</label>
+        
+        <!-- Preview / Upload Area -->
+        <div class="border-2 border-dashed border-white/20 rounded-xl p-6 text-center relative hover:border-gold/50 transition-colors bg-black/20 group cursor-pointer"
+             @click="data.rowIndex !== null && !isUploading && document.getElementById('file-upload').click()">
+             
+          <input type="file" id="file-upload" class="hidden" accept="image/*" @change="subirImagen" :disabled="isUploading || data.rowIndex === null">
+          
+          <!-- Si hay imagen -->
+          <template x-if="data.imagenUrl">
+            <div class="relative w-full h-32 flex items-center justify-center">
+              <img :src="data.imagenUrl" class="max-h-full max-w-full rounded-lg object-contain" />
+              <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg backdrop-blur-sm">
+                <span class="text-xs text-white font-bold tracking-wider">CAMBIAR FOTO</span>
+              </div>
+            </div>
+          </template>
+
+          <!-- Si no hay imagen -->
+          <template x-if="!data.imagenUrl && !isUploading">
+            <div class="space-y-2 py-4">
+              <div class="w-12 h-12 rounded-full bg-gold/10 text-gold flex items-center justify-center mx-auto mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-upload-cloud"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path><path d="M12 12v9"></path><path d="m16 16-4-4-4 4"></path></svg>
+              </div>
+              <p class="text-sm font-bold text-white">Haz clic para subir imagen</p>
+              <p class="text-[10px] text-white/40">PNG, JPG o WEBP</p>
+            </div>
+          </template>
+
+          <!-- Cargando -->
+          <template x-if="isUploading">
+            <div class="py-6 flex flex-col items-center">
+              <div class="w-6 h-6 border-2 border-gold border-t-transparent rounded-full animate-spin mb-3"></div>
+              <p class="text-xs text-gold animate-pulse">Subiendo a Google Drive...</p>
+            </div>
+          </template>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function popupApp() {
+      return {
+        isLoading: true,
+        isUploading: false,
+        error: null,
+        productos: [],
+        colImagenIndex: -1,
+        selectedIndex: -1,
+        data: {
+          rowIndex: null,
+          producto: '',
+          marca: '',
+          cantidad: 0,
+          imagenUrl: ''
+        },
+
+        init() {
+          this.fetchProductos();
+        },
+        
+        seleccionarProducto() {
+          if (this.selectedIndex == -1) {
+            this.data.rowIndex = null;
+            this.data.imagenUrl = '';
+            return;
+          }
+          const p = this.productos[this.selectedIndex];
+          this.data.rowIndex = p.rowIndex;
+          this.data.producto = p.producto;
+          this.data.marca = p.marca;
+          this.data.cantidad = p.cantidad;
+          this.data.imagenUrl = p.imagenUrl;
+        },
+        
+        fetchProductos() {
+          google.script.run
+            .withSuccessHandler(res => {
+              this.productos = res.productos;
+              this.colImagenIndex = res.colImagenIndex;
+              if (this.colImagenIndex === -1) {
+                this.error = "Falta la columna 'Imagen'. Escribe 'Imagen' en la fila 1 de Excel y vuelve a abrir este panel.";
+              } else {
+                this.error = null; 
+              }
+              this.isLoading = false;
+            })
+            .withFailureHandler(err => {
+              this.error = err.message || "Error al leer el inventario.";
+              this.isLoading = false;
+            })
+            .getProductosInventario();
+        },
+
+        subirImagen(event) {
+          const file = event.target.files[0];
+          if (!file) return;
+          
+          if (this.colImagenIndex === -1) {
+            alert("No hay columna de Imagen donde guardar.");
+            return;
+          }
+
+          this.isUploading = true;
+          
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const base64Data = e.target.result;
+            const mimeType = file.type;
+            const extension = file.name.split('.').pop();
+            const fileName = (this.data.producto || 'Producto_Sin_Nombre') + '.' + extension;
+
+            google.script.run
+              .withSuccessHandler(res => {
+                if (res.success) {
+                  this.data.imagenUrl = res.url;
+                  this.guardarUrl(res.url);
+                } else {
+                  this.error = "Error al subir: " + res.error;
+                  this.isUploading = false;
+                }
+              })
+              .withFailureHandler(err => {
+                this.error = "Error de conexión al subir la imagen.";
+                this.isUploading = false;
+              })
+              .subirImagenDrive(base64Data, mimeType, fileName);
+          };
+          reader.readAsDataURL(file);
+        },
+        
+        guardarUrl(url) {
+          google.script.run
+            .withSuccessHandler(res => {
+              this.isUploading = false;
+              // Guardado exitoso, la celda de Excel se ha actualizado en tiempo real.
+            })
+            .withFailureHandler(err => {
+              this.error = "Se subió pero no se pudo guardar en la celda: " + err.message;
+              this.isUploading = false;
+            })
+            .guardarFilaInventario(this.data.rowIndex, this.colImagenIndex, url);
+        }
+      }
+    }
+  </script>
+</body>
+</html>

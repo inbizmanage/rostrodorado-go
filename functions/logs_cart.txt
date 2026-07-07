@@ -1,0 +1,50 @@
+﻿2026-03-03T14:57:53.385248Z ? onLeadCompleted: [Brevo] Email sent OK to: sanjuancesardxdx@gmail.com | MessageId: <202603031457.33641267134@smtp-relay.mailin.fr> 
+2026-03-03T14:57:53.386767865Z D onLeadCompleted: Function execution took 1468 ms, finished with status: 'ok'
+2026-03-03T14:58:03.035717739Z D cronCheckAbandoned: Function execution started
+2026-03-03T14:58:03.041436Z ? cronCheckAbandoned: Running Abandoned Cart & Lead Check...
+2026-03-03T14:58:03.408192Z ? cronCheckAbandoned: Abandoned check complete. Emails sent: 0
+2026-03-03T14:58:03.408989789Z D cronCheckAbandoned: Function execution took 373 ms, finished with status: 'ok'
+2026-03-03T14:59:03.266333200Z D cronCheckAbandoned: Function execution started
+2026-03-03T14:59:03.275517Z ? cronCheckAbandoned: Running Abandoned Cart & Lead Check...
+2026-03-03T14:59:03.516230Z ? cronCheckAbandoned: Abandoned check complete. Emails sent: 0
+2026-03-03T14:59:03.517401580Z D cronCheckAbandoned: Function execution took 251 ms, finished with status: 'ok'
+2026-03-03T15:00:02.821615614Z D cronCheckAbandoned: Function execution started
+2026-03-03T15:00:02.825603Z ? cronCheckAbandoned: Running Abandoned Cart & Lead Check...
+2026-03-03T15:00:03.075819145Z D cronCheckAbandoned: Function execution took 254 ms, finished with status: 'ok'
+2026-03-03T15:00:03.083407Z ? cronCheckAbandoned: Abandoned check complete. Emails sent: 0
+2026-03-03T15:01:05.999126024Z D cronCheckAbandoned: Function execution started
+2026-03-03T15:01:06.005337Z ? cronCheckAbandoned: Running Abandoned Cart & Lead Check...
+2026-03-03T15:01:06.240449Z ? cronCheckAbandoned: Abandoned check complete. Emails sent: 0
+2026-03-03T15:01:06.242191658Z D cronCheckAbandoned: Function execution took 243 ms, finished with status: 'ok'
+2026-03-03T15:02:15.272045262Z D cronCheckAbandoned: Function execution started
+2026-03-03T15:02:15.277417Z ? cronCheckAbandoned: Running Abandoned Cart & Lead Check...
+2026-03-03T15:02:15.763079Z ? cronCheckAbandoned: Abandoned check complete. Emails sent: 0
+2026-03-03T15:02:15.764350897Z D cronCheckAbandoned: Function execution took 492 ms, finished with status: 'ok'
+2026-03-03T15:03:04.083398281Z D cronCheckAbandoned: Function execution started
+2026-03-03T15:03:04.088226Z ? cronCheckAbandoned: Running Abandoned Cart & Lead Check...
+2026-03-03T15:03:04.394491Z ? cronCheckAbandoned: Abandoned check complete. Emails sent: 0
+2026-03-03T15:03:04.395606186Z D cronCheckAbandoned: Function execution took 312 ms, finished with status: 'ok'
+2026-03-03T15:04:03.203246851Z D cronCheckAbandoned: Function execution started
+2026-03-03T15:04:03.271706Z ? cronCheckAbandoned: Running Abandoned Cart & Lead Check...
+2026-03-03T15:04:03.478806Z ? cronCheckAbandoned: Abandoned check complete. Emails sent: 0
+2026-03-03T15:04:03.479904934Z D cronCheckAbandoned: Function execution took 276 ms, finished with status: 'ok'
+2026-03-03T15:05:02.966107923Z D cronCheckAbandoned: Function execution started
+2026-03-03T15:05:02.969105Z ? cronCheckAbandoned: Running Abandoned Cart & Lead Check...
+2026-03-03T15:05:03.167495Z ? cronCheckAbandoned: Abandoned check complete. Emails sent: 0
+2026-03-03T15:05:03.168916241Z D cronCheckAbandoned: Function execution took 202 ms, finished with status: 'ok'
+2026-03-03T15:06:09.631651120Z D cronCheckAbandoned: Function execution started
+2026-03-03T15:06:09.636076Z ? cronCheckAbandoned: Running Abandoned Cart & Lead Check...
+2026-03-03T15:06:09.833443Z ? cronCheckAbandoned: Abandoned check complete. Emails sent: 0
+2026-03-03T15:06:09.835074400Z D cronCheckAbandoned: Function execution took 203 ms, finished with status: 'ok'
+2026-03-03T15:07:03.314129101Z D cronCheckAbandoned: Function execution started
+2026-03-03T15:07:03.316855Z ? cronCheckAbandoned: Running Abandoned Cart & Lead Check...
+2026-03-03T15:07:03.519353Z ? cronCheckAbandoned: Abandoned check complete. Emails sent: 0
+2026-03-03T15:07:03.520413856Z D cronCheckAbandoned: Function execution took 206 ms, finished with status: 'ok'
+2026-03-03T15:08:16.348487041Z D cronCheckAbandoned: Function execution started
+2026-03-03T15:08:16.352232Z ? cronCheckAbandoned: Running Abandoned Cart & Lead Check...
+2026-03-03T15:08:16.522478Z ? cronCheckAbandoned: Abandoned check complete. Emails sent: 0
+2026-03-03T15:08:16.570317320Z D cronCheckAbandoned: Function execution took 221 ms, finished with status: 'ok'
+2026-03-03T15:09:04.500667718Z D cronCheckAbandoned: Function execution started
+2026-03-03T15:09:04.507467Z ? cronCheckAbandoned: Running Abandoned Cart & Lead Check...
+2026-03-03T15:09:04.673601Z ? cronCheckAbandoned: Abandoned check complete. Emails sent: 0
+2026-03-03T15:09:04.674520592Z D cronCheckAbandoned: Function execution took 173 ms, finished with status: 'ok'

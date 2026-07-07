@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap');
+
+        /* Base Styles */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+        }
+
+        /* Container: Always white to ensure logo visibility */
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            padding: 60px 20px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        /* Minimalist Logo */
+        .logo-img {
+            max-height: 90px;
+            width: auto;
+            margin-bottom: 20px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Content Typography */
+        .title-text {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 24px;
+            color: #111111;
+            font-weight: 600;
+            margin: 20px 0;
+            letter-spacing: 2px;
+        }
+
+        .body-text {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 15px;
+            color: #555555;
+            margin: 20px 0 40px 0;
+            font-weight: 300;
+            line-height: 1.6;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 15px 35px;
+            background-color: #C6A87C;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        /* Footer */
+        .footer {
+            border-top: 1px solid #eeeeee;
+            padding-top: 30px;
+            margin-top: 20px;
+        }
+
+        .footer-text {
+            color: #999999;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        /* Dark Mode Overrides - Only affecting the background, NOT the card */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #1a1a1a !important;
+            }
+
+            /* We keep .container WHITE even in dark mode so the Black Text logo is visible */
+            .container {
+                background-color: #ffffff !important;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+            }
+        }
+    </style>
+</head>
+
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; word-spacing: normal;">
+    <!-- Wrapper Table for Full background control -->
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+        style="background-color: #f4f4f4;">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+
+                <!-- Main Card Container: Force White Background with table -->
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600"
+                    style="background-color: #ffffff; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); max-width: 600px; width: 100%;">
+
+                    <!-- Logo Section -->
+                    <tr>
+                        <td align="center" style="padding: 40px 0 30px 0;">
+                            <img src="https://i.imgur.com/93IWNqy.png" alt="Rostro Dorado Clinic" width="220"
+                                style="display: block; width: 220px; max-width: 100%; height: auto; border: 0;" />
+                        </td>
+                    </tr>
+
+                    <!-- Content Section -->
+                    <tr>
+                        <td align="center" style="padding: 0 40px;">
+                            <div class="title-text">
+                                HOLA {{ contact.NOMBRE }}
+                            </div>
+
+                            <p class="body-text">
+                                Gracias por ponerte en contacto con Rostro Dorado Clinic. Hemos recibido tu información
+                                y nuestro equipo se comunicará contigo muy pronto.
+                                <br><br>
+                                Si tienes alguna pregunta urgente, no dudes en escribirnos por WhatsApp.
+                            </p>
+
+                            <a href="https://wa.me/573001234567" class="cta-button">Escríbenos</a>
+                            <br><br><br>
+                        </td>
+                    </tr>
+
+                    <!-- Footer Section -->
+                    <tr>
+                        <td align="center" style="border-top: 1px solid #eeeeee; padding: 30px 40px 40px 40px;">
+
+                            <!-- Social Links -->
+                            <div style="margin-bottom: 20px;">
+                                <a href="https://www.instagram.com/rostrodoradoclinic/"
+                                    style="color: #111111; text-decoration: none; margin: 0 10px; font-weight: 600; font-size: 10px; letter-spacing: 2px; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">INSTAGRAM</a>
+                                <span style="color: #cccccc;">|</span>
+                                <a href="https://www.facebook.com/people/Dra-Isaura-Dorado/100067023886893/"
+                                    style="color: #111111; text-decoration: none; margin: 0 10px; font-weight: 600; font-size: 10px; letter-spacing: 2px; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">FACEBOOK</a>
+                                <span style="color: #cccccc;">|</span>
+                                <a href="https://www.tiktok.com/@draisauradorado"
+                                    style="color: #111111; text-decoration: none; margin: 0 10px; font-weight: 600; font-size: 10px; letter-spacing: 2px; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">TIKTOK</a>
+                            </div>
+
+                            <p
+                                style="font-family: 'Montserrat', sans-serif; font-size: 11px; color: #999999; margin: 0;">
+                                &copy; 2024 ROSTRO DORADO CLINIC
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>

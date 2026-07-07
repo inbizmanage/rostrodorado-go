@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rostro Dorado - Gestor de Productos</title>
+  
+  <!-- Inyección de dependencias CSS (Tailwind) -->
+  <?!= include('style'); ?>
+  
+</head>
+<body class="bg-dark-bg min-h-screen flex text-gray-200">
+
+  <div x-data="app()" class="flex w-full h-screen overflow-hidden">
+    
+    <!-- SIDEBAR: Lista de Productos -->
+    <aside class="w-80 bg-dark-card border-r border-dark-border flex flex-col h-full flex-shrink-0">
+      <div class="p-6 border-b border-dark-border">
+        <h1 class="text-xl font-serif text-gold flex items-center gap-2">
+          <i class="ph ph-sparkle text-2xl"></i>
+          Rostro Dorado
+        </h1>
+        <p class="text-xs text-gray-500 mt-1">Gestor Maestro de Productos</p>
+        
+        <button @click="nuevoProducto()" class="mt-6 w-full py-2.5 bg-gold hover:bg-gold-light text-black font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 text-sm">
+          <i class="ph ph-plus-circle text-lg"></i> Nuevo Producto
+        </button>
+
+        <button @click="sincronizar()" :disabled="isSyncing" class="mt-2 w-full py-2 bg-[#1A1A1A] border border-dark-border hover:border-gold/50 text-gray-300 rounded-xl transition-colors flex items-center justify-center gap-2 text-xs font-medium disabled:opacity-50">
+          <i class="ph ph-arrows-clockwise text-sm" :class="{'animate-spin text-gold': isSyncing}"></i> 
+          <span x-text="isSyncing ? 'Sincronizando...' : 'Sincronizar Inventario'"></span>
+        </button>
+
+        <div class="mt-4 relative">
+          <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
+          <input type="text" x-model="search" placeholder="Buscar..." class="w-full bg-[#1A1A1A] border border-dark-border rounded-lg pl-9 pr-4 py-2 text-sm focus:border-gold outline-none transition-colors">
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-4 space-y-2">
+        <template x-if="isLoading">
+          <div class="text-center py-8 text-gray-500 flex flex-col items-center">
+            <i class="ph ph-spinner animate-spin text-2xl mb-2 text-gold"></i>
+            <span class="text-xs">Cargando productos...</span>
+          </div>
+        </template>
+        
+        <template x-if="!isLoading && filteredProductos.length === 0">
+          <div class="text-center py-8 text-gray-600 text-sm">
+            No hay productos.
+          </div>
+        </template>
+
+        <template x-for="p in filteredProductos" :key="p.ID || p.PRODUCTO">
+          <button @click="seleccionar(p)" 
+                  :class="{'border-gold bg-gold/5': seleccionado && seleccionado.ID === p.ID, 'border-transparent hover:bg-white/5': !seleccionado || seleccionado.ID !== p.ID}"
+                  class="w-full text-left p-3 rounded-xl border transition-all flex items-start gap-3 group">
+            
+            <div class="w-10 h-10 rounded-lg bg-dark-bg border border-dark-border flex-shrink-0 overflow-hidden flex items-center justify-center">
+              <template x-if="p['Imagen Principal']">
+                <img :src="p['Imagen Principal']" class="w-full h-full object-cover">
+              </template>
+              <template x-if="!p['Imagen Principal']">
+                <i class="ph ph-image text-gray-600"></i>
+              </template>
+            </div>
+            
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-white truncate" x-text="p['PRODUCTO'] || 'Sin nombre'"></p>
+              <p class="text-xs text-gray-500 truncate" x-text="p['Marca'] || 'Sin marca'"></p>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <p class="text-xs font-semibold text-gold" x-text="'$' + (p['Precio De Venta'] || 0)"></p>
+              <p class="text-[10px] text-gray-500 mt-0.5" x-text="p['CANTIDAD'] + ' un.'"></p>
+            </div>
+          </button>
+        </template>
+      </div>
+    </aside>
+
+    <!-- MAIN: Formulario de Edición -->
+    <main class="flex-1 flex flex-col h-full bg-dark-bg relative">
+      
+      <!-- Loader Overlay Guardando -->
+      <div x-show="isSaving" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center" style="display: none;">
+        <div class="bg-dark-card border border-gold/30 p-6 rounded-2xl flex flex-col items-center">
+          <i class="ph ph-spinner animate-spin text-3xl text-gold mb-3"></i>
+          <p class="text-sm font-medium text-white">Guardando en Sheets...</p>
+        </div>
+      </div>
+
+      <template x-if="!seleccionado">
+        <div class="flex-1 flex flex-col items-center justify-center text-gray-500">
+          <i class="ph ph-package text-6xl mb-4 text-dark-border"></i>
+          <p>Selecciona un producto o crea uno nuevo</p>
+        </div>
+      </template>
+
+      <template x-if="seleccionado">
+        <div class="flex-1 overflow-y-auto">
+          
+          <!-- Formulario Completo (Diseño del Usuario) -->
+          <form class="p-8 space-y-6" @submit.prevent="guardar()">
+            <style>
+                input[type=number]::-webkit-inner-spin-button, 
+                input[type=number]::-webkit-outer-spin-button { 
+                    -webkit-appearance: none; 
+                    margin: 0; 
+                }
+                input[type=number] {
+                    -moz-appearance: textfield;
+                }
+            </style>
+            
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+              <h3 class="text-xl md:text-2xl text-white font-serif" x-text="seleccionado.ID ? 'Editar Producto' : 'Nuevo Producto'"></h3>
+              <div class="flex gap-2 w-full md:w-auto justify-between md:justify-end">
+                <button type="button" @click="abrirChat()" class="flex-1 md:flex-none text-xs bg-gold/10 hover:bg-gold/20 text-gold px-4 py-2 rounded-lg flex justify-center items-center gap-2 transition-colors border border-gold/20 font-bold">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path><path d="M20 3v4"></path><path d="M22 5h-4"></path><path d="M4 17v2"></path><path d="M5 18H3"></path></svg> 
+                  Redactar con Alex
+                </button>
+                <button type="button" @click="seleccionado = null" class="text-white/50 hover:text-white transition-colors p-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-6">
+              <div class="space-y-2">
+                <label class="text-xs uppercase tracking-widest text-white/50">Nombre *</label>
+                <input required x-model="seleccionado['PRODUCTO']" class="w-full bg-black/20 border border-white/10 p-3 rounded-lg text-white focus:border-gold outline-none" placeholder="Ej: Sérum Hialurónico">
+              </div>
+
+              <div class="space-y-2">
+                <label class="text-xs uppercase tracking-widest text-gold font-bold">Marca</label>
+                <input type="text" x-model="seleccionado['Marca']" class="w-full bg-black/20 border border-white/10 p-3 rounded-lg text-white focus:border-gold outline-none focus:bg-white/5 transition-colors" placeholder="Ej: Rostro Dorado">
+                <p class="text-[10px] text-white/40 h-8">Marca del producto (opcional)</p>
+              </div>
+
+              <!-- Categorización -->
+              <div class="bg-white/5 border border-white/5 rounded-xl p-6 space-y-4">
+                <div class="flex justify-between items-center border-b border-white/5 pb-2">
+                  <label class="text-xs uppercase tracking-widest text-white/50">Categorización</label>
+                  <button type="button" class="text-[10px] bg-gold/10 hover:bg-gold/20 text-gold px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors border border-gold/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg> Gestionar Estructura
+                  </button>
+                </div>
+                <div class="grid md:grid-cols-3 gap-4 items-start">
+                  <div class="space-y-1">
+                    <div class="relative space-y-2">
+                      <label class="text-xs uppercase tracking-widest text-white/50">Principal</label>
+                      <select x-model="seleccionado['Categoria Principal']" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-white outline-none cursor-pointer appearance-none transition-colors hover:border-white/30">
+                        <option value="" class="text-black">Seleccionar...</option>
+                        <option value="Cuidado Facial" class="text-black">Cuidado Facial</option>
+                        <option value="Cuidado Corporal" class="text-black">Cuidado Corporal</option>
+                        <option value="Maquillaje" class="text-black">Maquillaje</option>
+                        <option value="Aparatología" class="text-black">Aparatología</option>
+                      </select>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down text-gold absolute right-4 top-[38px] pointer-events-none"><path d="m6 9 6 6 6-6"></path></svg>
+                    </div>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="relative space-y-2">
+                      <label class="text-xs uppercase tracking-widest text-white/50">Subcategoría</label>
+                      <select x-model="seleccionado['Subcategoria']" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-white outline-none cursor-pointer appearance-none transition-colors hover:border-white/30">
+                        <option value="" class="text-black">-</option>
+                        <option value="Sérums" class="text-black">Sérums</option>
+                        <option value="Cremas" class="text-black">Cremas</option>
+                        <option value="Limpiadores" class="text-black">Limpiadores</option>
+                        <option value="Protección Solar" class="text-black">Protección Solar</option>
+                      </select>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down text-gold absolute right-4 top-[38px] pointer-events-none"><path d="m6 9 6 6 6-6"></path></svg>
+                    </div>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="relative space-y-2">
+                      <label class="text-xs uppercase tracking-widest text-white/50">Detalle</label>
+                      <select x-model="seleccionado['Detalle Categoria']" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-white outline-none cursor-pointer appearance-none transition-colors hover:border-white/30">
+                        <option value="" class="text-black">-</option>
+                        <option value="Antiedad" class="text-black">Antiedad</option>
+                        <option value="Hidratación" class="text-black">Hidratación</option>
+                        <option value="Acné" class="text-black">Acné</option>
+                        <option value="Manchas" class="text-black">Manchas</option>
+                      </select>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down text-gold absolute right-4 top-[38px] pointer-events-none"><path d="m6 9 6 6 6-6"></path></svg>
+                    </div>
+                  </div>
+                </div>
+                <div class="text-[10px] text-white/30 font-mono bg-black/20 p-2 rounded border border-white/5 flex items-center gap-2">
+                  <span class="uppercase text-white/20">Ruta Seleccionada:</span>
+                  <span class="text-gold" x-text="(seleccionado['Categoria Principal'] || '') + (seleccionado['Subcategoria'] ? ' > ' + seleccionado['Subcategoria'] : '') + (seleccionado['Detalle Categoria'] ? ' > ' + seleccionado['Detalle Categoria'] : '') || 'Sin categoría'"></span>
+                </div>
+              </div>
+
+              <!-- Inventario y Precios -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="space-y-2">
+                  <label class="text-xs uppercase tracking-widest text-gold font-bold">Costo de Producción *</label>
+                  <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-white/50">$</span>
+                    <input required type="number" min="0" x-model.number="seleccionado['Precio Costo + IVA']" class="w-full bg-black/20 border border-white/10 p-3 pl-8 rounded-lg text-white focus:border-gold outline-none focus:bg-white/5 transition-colors" placeholder="0">
+                  </div>
+                  <p class="text-[10px] text-white/40 h-8">Costo base del producto (interno)</p>
+                </div>
+                <div class="space-y-2">
+                  <label class="text-xs uppercase tracking-widest text-gold font-bold">Stock Disponible *</label>
+                  <input required type="number" min="0" x-model.number="seleccionado['CANTIDAD']" class="w-full bg-black/20 border border-white/10 p-3 rounded-lg text-white focus:border-gold outline-none focus:bg-white/5 transition-colors" placeholder="0">
+                  <p class="text-[10px] text-white/40 h-8">Unidades disponibles para venta</p>
+                </div>
+                <div class="space-y-2">
+                  <label class="text-xs uppercase tracking-widest text-gold font-bold">Precio al Público (Base) *</label>
+                  <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gold">$</span>
+                    <input required type="number" min="0" x-model.number="seleccionado['Precio Base']" class="w-full bg-gold/10 border border-gold/30 p-3 pl-8 rounded-lg text-gold focus:border-gold outline-none font-bold placeholder-gold/30 focus:bg-gold/20 transition-colors" placeholder="0">
+                  </div>
+                  <p class="text-[10px] text-gold/60 h-8">Valor que deseas recibir (antes de Wompi)</p>
+                </div>
+              </div>
+
+              <!-- Envío -->
+              <div class="bg-white/5 border border-white/5 rounded-xl p-6 space-y-4">
+                <div class="flex justify-between items-center border-b border-white/5 pb-2">
+                  <label class="text-xs uppercase tracking-widest text-white/50 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg> 
+                    Configuración de Envío (MiPaquete)
+                  </label>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div class="space-y-1">
+                    <div class="flex justify-between items-center">
+                      <label class="text-[10px] uppercase tracking-widest text-white/40">Peso</label>
+                      <div class="flex bg-black/20 rounded border border-white/10 overflow-hidden">
+                        <button type="button" class="text-[8px] px-1.5 py-0.5 bg-gold text-black font-bold">KG</button>
+                      </div>
+                    </div>
+                    <input type="number" min="0" step="0.01" x-model.number="seleccionado['Peso (kg)']" class="w-full bg-black/20 border border-white/10 p-2 rounded text-white text-sm focus:border-gold outline-none" placeholder="1">
+                  </div>
+                  <div class="space-y-1">
+                    <label class="text-[10px] uppercase tracking-widest text-white/40">Alto (cm)</label>
+                    <input type="number" min="1" x-model.number="seleccionado['Alto (cm)']" class="w-full bg-black/20 border border-white/10 p-2 rounded text-white text-sm focus:border-gold outline-none" placeholder="10">
+                  </div>
+                  <div class="space-y-1">
+                    <label class="text-[10px] uppercase tracking-widest text-white/40">Ancho (cm)</label>
+                    <input type="number" min="1" x-model.number="seleccionado['Ancho (cm)']" class="w-full bg-black/20 border border-white/10 p-2 rounded text-white text-sm focus:border-gold outline-none" placeholder="10">
+                  </div>
+                  <div class="space-y-1">
+                    <label class="text-[10px] uppercase tracking-widest text-white/40">Largo (cm)</label>
+                    <input type="number" min="1" x-model.number="seleccionado['Largo (cm)']" class="w-full bg-black/20 border border-white/10 p-2 rounded text-white text-sm focus:border-gold outline-none" placeholder="10">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Calculadora -->
+              <div class="bg-white/5 p-6 rounded-xl border border-white/5">
+                <div class="flex justify-between items-center mb-6">
+                  <label class="text-xs uppercase tracking-widest text-white/60 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    Resultado Final
+                  </label>
+                  <span class="text-[10px] text-white/30 uppercase border border-white/10 px-2 py-1 rounded">Cálculo Automático</span>
+                </div>
+                <div class="grid md:grid-cols-3 gap-4">
+                  <div class="bg-green-500/10 p-4 rounded-lg border border-green-500/20 flex flex-col justify-between">
+                    <div class="flex justify-between items-start mb-2">
+                      <p class="text-[10px] text-green-400 uppercase tracking-wider">Precio Final</p>
+                      <span class="text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded">En Tienda</span>
+                    </div>
+                    <p class="text-2xl text-white font-mono font-bold" x-text="'$' + new Intl.NumberFormat('es-CO').format(precioFinal)"></p>
+                    <p class="text-[10px] text-white/30 mt-1">Lo que paga el cliente</p>
+                  </div>
+                  <div class="bg-white/5 p-4 rounded-lg border border-white/5 flex flex-col justify-between">
+                    <div class="flex justify-between items-start mb-2">
+                      <p class="text-[10px] text-white/40 uppercase tracking-wider">Recargo Wompi</p>
+                      <span class="text-[10px] bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded">Tarifa</span>
+                    </div>
+                    <p class="text-xl text-white/60 font-mono" x-text="'+ $' + new Intl.NumberFormat('es-CO').format(recargoWompi)"></p>
+                    <p class="text-[10px] text-white/20 mt-1">Se suma al precio base</p>
+                  </div>
+                  <div class="bg-gold/10 p-4 rounded-lg border border-gold/20 flex flex-col justify-between">
+                    <div class="flex justify-between items-start mb-2">
+                      <p class="text-[10px] text-gold/60 uppercase tracking-wider">Tu Ganancia</p>
+                      <span class="text-[10px] bg-gold/20 text-gold px-1.5 py-0.5 rounded">Neto</span>
+                    </div>
+                    <p class="text-2xl text-gold font-bold" x-text="'$' + new Intl.NumberFormat('es-CO').format(gananciaNeta)"></p>
+                    <p class="text-[10px] text-gold/40 mt-1">Precio Base - Costo</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Imagen Principal -->
+              <div class="space-y-2">
+                <label class="text-xs uppercase tracking-widest text-white/50">Imagen Principal *</label>
+                <div class="space-y-3">
+                  <div class="relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all border-white/20 hover:border-white/40 bg-black/20 flex flex-col items-center justify-center overflow-hidden min-h-[160px]">
+                    <template x-if="isUploading">
+                      <div class="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
+                        <i class="ph ph-spinner-gap animate-spin text-3xl text-gold"></i>
+                      </div>
+                    </template>
+                    <template x-if="seleccionado['Imagen Principal']">
+                      <img :src="seleccionado['Imagen Principal']" class="absolute inset-0 w-full h-full object-contain">
+                    </template>
+                    
+                    <input type="file" accept="image/*,video/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" @change="subirImagen($event)">
+                    
+                    <div class="space-y-3 pointer-events-none" x-show="!seleccionado['Imagen Principal']">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cloud mx-auto text-white/50"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>
+                      <div>
+                        <p class="text-white font-medium mb-1">Selecciona una imagen o video</p>
+                        <p class="text-white/50 text-sm">Arrastra o haz clic aquí</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="text-center">
+                    <p class="text-white/30 text-xs mb-2">o pega una URL directa</p>
+                    <input type="url" x-model="seleccionado['Imagen Principal']" placeholder="https://..." class="w-full bg-black/20 border border-white/10 p-2 rounded-lg text-white text-sm focus:border-gold outline-none">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Galería Adicional -->
+              <div class="space-y-4 pt-4 border-t border-white/10">
+                <div class="flex justify-between items-center">
+                  <label class="text-xs uppercase tracking-widest text-gold font-bold flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-image"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg> 
+                    Galería Adicional
+                  </label>
+                  <label class="text-[10px] bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg transition-colors cursor-pointer inline-flex items-center">
+                    + Agregar Item
+                    <input type="file" accept="image/*" multiple class="hidden" @change="subirGaleria($event)">
+                  </label>
+                </div>
+                <div class="space-y-2">
+                  <textarea x-model="seleccionado['Galeria (URLs)']" rows="2" placeholder="URLs separadas por comas (se auto-rellena al subir)" class="w-full bg-black/20 border border-white/10 p-3 rounded-lg text-white text-xs focus:border-gold outline-none"></textarea>
+                </div>
+              </div>
+
+              <!-- Textos Extras -->
+              <div class="space-y-2">
+                <label class="text-xs uppercase tracking-widest text-white/50">Descripción Corta *</label>
+                <textarea required rows="2" x-model="seleccionado['Descripcion Corta']" class="w-full bg-black/20 border border-white/10 p-3 rounded-lg text-white focus:border-gold outline-none" placeholder="Descripción breve que aparece en las tarjetas de producto"></textarea>
+              </div>
+              <div class="space-y-2">
+                <label class="text-xs uppercase tracking-widest text-white/50">Descripción Larga</label>
+                <textarea rows="3" x-model="seleccionado['Descripcion Larga']" class="w-full bg-black/20 border border-white/10 p-3 rounded-lg text-white focus:border-gold outline-none" placeholder="Descripción detallada del producto"></textarea>
+              </div>
+              <div class="space-y-2">
+                <label class="text-xs uppercase tracking-widest text-white/50">Ingredientes</label>
+                <input x-model="seleccionado['Ingredientes']" class="w-full bg-black/20 border border-white/10 p-3 rounded-lg text-white focus:border-gold outline-none" placeholder="Separados por comas: Ácido Hialurónico, Aloe Vera, Vitamina E">
+              </div>
+              <div class="space-y-2">
+                <label class="text-xs uppercase tracking-widest text-white/50">Modo de Uso</label>
+                <textarea rows="2" x-model="seleccionado['Modo Uso']" class="w-full bg-black/20 border border-white/10 p-3 rounded-lg text-white focus:border-gold outline-none" placeholder="Instrucciones de uso del producto"></textarea>
+              </div>
+              <div class="space-y-2">
+                <label class="text-xs uppercase tracking-widest text-white/50">Beneficios</label>
+                <input x-model="seleccionado['Beneficios']" class="w-full bg-black/20 border border-white/10 p-3 rounded-lg text-white focus:border-gold outline-none" placeholder="Separados por comas: Hidratación intensa, Efecto relleno, Mejora textura">
+              </div>
+
+              <!-- Botones Finales -->
+              <div class="flex flex-col-reverse md:flex-row gap-3 pt-4 border-t border-white/10">
+                <button type="button" @click="seleccionado = null" class="w-full md:w-auto px-8 py-3 bg-white/5 text-white rounded-xl hover:bg-white/10 transition-colors text-center">Cancelar</button>
+                <button type="button" @click="eliminar()" x-show="seleccionado.ID" class="w-full md:w-auto px-4 py-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500/20 transition-colors flex justify-center items-center" title="Borrar Producto">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg>
+                </button>
+                <button type="submit" class="w-full md:flex-1 font-bold uppercase tracking-widest px-8 py-3 rounded-xl transition-colors bg-gold text-black hover:bg-white" x-text="seleccionado.ID ? 'Guardar Cambios' : 'Crear Producto'"></button>
+              </div>
+            </div>
+          </form>
+
+        </div>
+      </template>
+    </main>
+
+    <!-- Notificaciones Toast -->
+    <div class="fixed bottom-6 right-6 z-50 flex flex-col gap-2">
+      <template x-for="toast in toasts" :key="toast.id">
+        <div x-transition.duration.300ms
+             :class="toast.type === 'success' ? 'bg-green-500/10 border-green-500/30 text-green-400' : 'bg-red-500/10 border-red-500/30 text-red-400'"
+             class="border rounded-xl px-4 py-3 shadow-lg flex items-center gap-3 min-w-[250px] backdrop-blur-md bg-dark-card/90">
+          <i :class="toast.type === 'success' ? 'ph-check-circle' : 'ph-warning-circle'" class="ph text-xl"></i>
+          <span class="text-sm font-medium" x-text="toast.message"></span>
+        </div>
+      </template>
+    </div>
+
+    <!-- DRAWER: Chat con Alex -->
+    <div x-show="isChatOpen" style="display: none;" class="fixed inset-0 z-[100] flex justify-end">
+      <!-- Overlay oscuro -->
+      <div x-show="isChatOpen" x-transition.opacity class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="isChatOpen = false"></div>
+      
+      <!-- Panel lateral -->
+      <div x-show="isChatOpen" 
+           x-transition:enter="transition ease-out duration-300"
+           x-transition:enter-start="translate-x-full"
+           x-transition:enter-end="translate-x-0"
+           x-transition:leave="transition ease-in duration-300"
+           x-transition:leave-start="translate-x-0"
+           x-transition:leave-end="translate-x-full"
+           class="relative w-full md:w-[450px] bg-[#111] border-l border-white/10 h-full flex flex-col shadow-2xl">
+        
+        <!-- Cabecera -->
+        <div class="p-4 border-b border-white/10 flex justify-between items-center bg-black/40">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center text-gold border border-gold/30">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bot"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>
+            </div>
+            <div>
+              <h3 class="text-white font-bold text-sm">Asistente Alex</h3>
+              <p class="text-[10px] text-white/50" x-text="'Editando: ' + (seleccionado?.['PRODUCTO'] || 'Nuevo Producto')"></p>
+            </div>
+          </div>
+          <button @click="isChatOpen = false" class="text-white/50 hover:text-white p-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          </button>
+        </div>
+
+        <!-- Historial de Chat -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-4" id="chat-container">
+          <template x-for="(msg, index) in chatMessages" :key="index">
+            <div :class="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
+              <div :class="msg.role === 'user' ? 'bg-white/10 text-white rounded-l-2xl rounded-tr-2xl' : 'bg-gold/10 border border-gold/20 text-gold rounded-r-2xl rounded-tl-2xl'" class="max-w-[85%] p-3 text-sm">
+                
+                <!-- Contenido del mensaje. Renderizamos JSON si lo detecta, o texto plano -->
+                <template x-if="msg.role === 'assistant' && msg.hasJson">
+                  <div class="space-y-3">
+                    <p class="whitespace-pre-wrap text-[13px]" x-text="msg.textPart"></p>
+                    <div class="bg-black/50 border border-white/5 rounded-lg p-3 text-[10px] font-mono text-white/70 overflow-x-auto">
+                      <pre x-text="JSON.stringify(msg.jsonData, null, 2)"></pre>
+                    </div>
+                    <button @click="aplicarDatosJson(msg.jsonData)" class="w-full py-2 bg-gold text-black font-bold text-xs rounded hover:bg-white transition-colors">
+                      Aplicar estos datos al formulario
+                    </button>
+                  </div>
+                </template>
+
+                <template x-if="!msg.hasJson">
+                  <p class="whitespace-pre-wrap text-[13px]" x-text="msg.content"></p>
+                </template>
+
+              </div>
+            </div>
+          </template>
+
+          <!-- Indicador de Escribiendo -->
+          <div x-show="isAlexTyping" class="flex justify-start">
+            <div class="bg-gold/5 border border-gold/10 text-gold rounded-r-2xl rounded-tl-2xl p-4 flex gap-1 items-center">
+              <div class="w-1.5 h-1.5 bg-gold rounded-full animate-bounce"></div>
+              <div class="w-1.5 h-1.5 bg-gold rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+              <div class="w-1.5 h-1.5 bg-gold rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Input de Mensaje -->
+        <div class="p-4 border-t border-white/10 bg-black/40">
+          <form @submit.prevent="enviarMensajeAlex()" class="relative flex items-center">
+            <input x-model="chatInput" type="text" placeholder="Pídele a Alex que investigue..." :disabled="isAlexTyping" class="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-4 pr-12 text-white text-sm focus:border-gold outline-none disabled:opacity-50">
+            <button type="submit" :disabled="!chatInput.trim() || isAlexTyping" class="absolute right-2 p-2 text-gold hover:bg-white/5 rounded-lg disabled:opacity-30 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-send"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
+            </button>
+          </form>
+          <p class="text-[9px] text-white/30 text-center mt-2">Alex usa Inteligencia Artificial y puede cometer errores.</p>
+        </div>
+        
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Inyección de dependencias JS (Alpine) -->
+  <?!= include('app'); ?>
+
+</body>
+</html>
