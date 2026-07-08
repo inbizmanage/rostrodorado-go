@@ -1093,9 +1093,9 @@ const CheckoutPage: React.FC = () => {
                         </button>
 
                         <p className="text-[10px] text-center mt-4 text-gray-500">
-                            Al finalizar la compra, aceptas nuestros <a href="/terminos-y-condiciones" target="_blank" className="underline hover:text-gold">Términos y Condiciones</a>,
-                            <a href="/politica-de-privacidad" target="_blank" className="underline hover:text-gold mx-1">Política de Privacidad</a> y
-                            <a href="/politica-de-envios" target="_blank" className="underline hover:text-gold ml-1">Política de Envíos</a>.
+                            Al finalizar la compra, aceptas nuestros <a href="#/terminos-y-condiciones" target="_blank" className="underline hover:text-gold">Términos y Condiciones</a>,
+                            <a href="#/politica-de-privacidad" target="_blank" className="underline hover:text-gold mx-1">Política de Privacidad</a> y
+                            <a href="#/politica-de-envios" target="_blank" className="underline hover:text-gold ml-1">Política de Envíos</a>.
                             También aceptas recibir comunicaciones promocionales.
                         </p>
 

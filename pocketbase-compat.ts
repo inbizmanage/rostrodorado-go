@@ -1,7 +1,7 @@
 import PocketBase from 'pocketbase';
 
-// Initialize the Pocketbase client pointing to the Hugging Face backend
-export const pb = new PocketBase("https://inbizbreaking-sys-v2-api.hf.space");
+// Initialize the Pocketbase client pointing to the same host that served the frontend
+export const pb = new PocketBase(window.location.origin);
 
 // --- APP MOCK ---
 export function initializeApp() {
@@ -382,7 +382,7 @@ export function getFunctions() {
 export function httpsCallable(functionsInstance: any, name: string) {
   return async (data: any) => {
     // Route calculating and tracking functions directly to our Go REST endpoints
-    const response = await fetch(`https://inbizbreaking-sys-v2-api.hf.space/api/${name}`, {
+    const response = await fetch(`/api/${name}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

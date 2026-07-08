@@ -23,7 +23,7 @@ const PoliticaEnvios = () => {
 
             <h3>3. Devoluciones y Reembolsos</h3>
             <p>
-                Para consultar nuestra política detallada de cambios, garantías, derecho de retracto y reembolsos, por favor visita nuestra página dedicada de <a href="/politica-devoluciones" className="text-gold underline">Política de Devoluciones y Reembolso</a>.
+                Para consultar nuestra política detallada de cambios, garantías, derecho de retracto y reembolsos, por favor visita nuestra página dedicada de <a href="#/politica-devoluciones" className="text-gold underline">Política de Devoluciones y Reembolso</a>.
             </p>
 
             <div className="mt-12 pt-8 border-t border-gray-200">

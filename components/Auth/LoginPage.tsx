@@ -42,7 +42,7 @@ const LoginPage: React.FC = () => {
     // For now we assume local emulator default port 5001 or we will instruct user to deploy.
     // const FUNCTIONS_URL = 'http://127.0.0.1:5001/rostro-dorado-clinic/us-central1';
     // For production (after deploy): https://us-central1-rostro-dorado-clinic.cloudfunctions.net
-    const FUNCTIONS_URL = 'https://inbizbreaking-sys-v2-api.hf.space/api';
+    const FUNCTIONS_URL = '/api';
 
 
     const handleSendCode = async (e: React.FormEvent | null, manualEmail?: string) => {

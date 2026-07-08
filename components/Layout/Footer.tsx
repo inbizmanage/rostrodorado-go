@@ -1,5 +1,6 @@
 import React from 'react';
 import { Instagram, Facebook, Youtube } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
     const openLegal = (e: React.MouseEvent, tab: 'terms' | 'privacy') => {
@@ -81,28 +82,28 @@ const Footer: React.FC = () => {
                         {/* Links Column */}
                         <div className="flex flex-col gap-2 text-left">
                             <h4 className="text-white font-serif mb-1">Legal</h4>
-                            <a href="/#about" className="hover:text-gold transition-colors">
+                            <Link to="/#about" className="hover:text-gold transition-colors">
                                 Quiénes Somos
-                            </a>
-                            <a href="/terminos-y-condiciones" className="hover:text-gold transition-colors">
+                            </Link>
+                            <Link to="/terminos-y-condiciones" className="hover:text-gold transition-colors">
                                 Términos y Condiciones
-                            </a>
-                            <a href="/politica-de-privacidad" className="hover:text-gold transition-colors">
+                            </Link>
+                            <Link to="/politica-de-privacidad" className="hover:text-gold transition-colors">
                                 Política de Privacidad
-                            </a>
-                            <a href="/politica-de-envios" className="hover:text-gold transition-colors">
+                            </Link>
+                            <Link to="/politica-de-envios" className="hover:text-gold transition-colors">
                                 Política de Envíos
-                            </a>
-                            <a href="/politica-devoluciones" className="hover:text-gold transition-colors">
+                            </Link>
+                            <Link to="/politica-devoluciones" className="hover:text-gold transition-colors">
                                 Política de Devoluciones y Reembolso
-                            </a>
+                            </Link>
                         </div>
                     </div>
 
                     <div className="flex flex-col gap-4 items-center md:items-end">
-                        <a href="/blog" className="px-4 py-2 border border-gold/30 rounded-full hover:bg-gold/10 hover:border-gold transition-all text-sm font-serif">
+                        <Link to="/blog" className="px-4 py-2 border border-gold/30 rounded-full hover:bg-gold/10 hover:border-gold transition-all text-sm font-serif">
                             Blog & Noticias
-                        </a>
+                        </Link>
                         <p className="text-[10px] opacity-50">Diseño Web: Premium Aesthetics</p>
                     </div>
                 </div>
