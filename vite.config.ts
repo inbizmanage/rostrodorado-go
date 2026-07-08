@@ -15,7 +15,7 @@ export default defineConfig(({ command }) => ({
       'firebase/storage': path.resolve(__dirname, './pocketbase-compat.ts'),
     }
   },
-  base: command === 'serve' ? '/' : '/sys-v2-platform/',
+  base: command === 'serve' ? '/' : '/rostrodorado-go/',
   server: {
     host: true,
     port: 3000,
