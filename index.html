@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es" dir="ltr">
+
+<head>
+  <meta charset="UTF-8" />
+
+  <!-- Single Page Apps for GitHub Pages Redirection Resolver -->
+  <script type="text/javascript">
+    (function(l) {
+      if (l.search[0] === '?') {
+        var decoded = l.search.slice(1).split('&').map(function(s) { 
+          return s.replace(/~and~/g, '&') 
+        }).join('?');
+        if (decoded.slice(0, 2) === 'p=') {
+          window.history.replaceState(null, null,
+            l.pathname.slice(0, -1) + decoded.slice(2) + l.hash
+          );
+        }
+      }
+    }(window.location));
+  </script>
+  
+  <!-- Google Analytics with Consent Mode v2 -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    
+    // Default to denied (requires user consent to track)
+    gtag('consent', 'default', {
+      'analytics_storage': 'denied',
+      'ad_storage': 'denied',
+      'wait_for_update': 500
+    });
+
+    gtag('js', new Date());
+    gtag('config', 'G-0BRGVHGC76', {
+      // Prevent automatic pageviews since we handle them in React Router
+      send_page_view: false
+    });
+  </script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0BRGVHGC76"></script>
+
+  <!-- Preload LCP Hero Image -->
+  <link rel="preload" href="/rostrodorado-go/images/hero.webp" as="image" type="image/webp" fetchpriority="high" />
+
+  <!-- Meta Pixel is loaded dynamically via utils/pixel.ts after cookie consent -->
+
+  <link rel="icon" href="/rostrodorado-go/favicon.ico" />
+  <link rel="shortcut icon" href="/rostrodorado-go/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="Clínica de Medicina Estética en Riohacha, La Guajira. Dra. Isaura Dorado experta en Armonización Facial, Botox, Ácido Hialurónico y Rejuvenecimiento facial." />
+  <meta name="keywords"
+    content="Rostro Dorado Clinic, Dra Isaura Dorado, Medicina Estética Riohacha, Botox Riohacha, Labios Riohacha, Ácido Hialurónico La Guajira, Dermocosmética Colombia" />
+  <link rel="canonical" href="https://rostrodorado.com/" />
+  <link rel="alternate" hreflang="es-CO" href="https://rostrodorado.com/" />
+  <link rel="alternate" hreflang="x-default" href="https://rostrodorado.com/" />
+
+  <!-- Open Graph / Facebook / WhatsApp -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://rostrodorado.com/" />
+  <meta property="og:title" content="Dra. Isaura Dorado | Medicina Estética Riohacha" />
+  <meta property="og:description"
+    content="Clínica de Medicina Estética en Riohacha, La Guajira. Dra. Isaura Dorado experta en Armonización Facial, Botox, Ácido Hialurónico y Rejuvenecimiento facial." />
+  <meta property="og:image" content="https://rostrodorado.com/images/seo.webp" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+
+  <meta name="google-site-verification" content="DIOsmuRHZKux6bXEKeDC_eP5BD3JA4JbaOwZQh3sJxM" />
+  <title>Dra. Isaura Dorado | Medicina Estética Riohacha</title>
+
+  <!-- Schema.org Markup for Google Search Logo -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "MedicalOrganization",
+      "name": "Rostro Dorado Clinic",
+      "url": "https://rostrodorado.com/",
+      "logo": "https://rostrodorado.com/logo192.png",
+      "image": "https://rostrodorado.com/images/seo.webp",
+      "description": "Clínica líder en Medicina Estética y Antienvejecimiento en Riohacha, La Guajira. Especialistas en Armonización Facial y cuidado de la piel.",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Riohacha",
+        "addressRegion": "La Guajira",
+        "addressCountry": "CO"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+57-300-823-3037",
+        "contactType": "reservations"
+      },
+      "sameAs": [
+        "https://www.instagram.com/dra.isauradorado/"
+      ]
+    }
+  </script>
+  <script>
+    // Global Polyfills for Local Development / Non-Secure Contexts causing Wompi Crashes
+    // Enhanced version using Object.defineProperty to bypass read-only constraints
+
+    if (!window.crypto) {
+      window.crypto = {};
+    }
+    if (!window.crypto.subtle) {
+      window.crypto.subtle = {
+        digest: async () => new Uint8Array(32)
+      };
+    }
+
+    if (!navigator.mediaDevices) {
+      try {
+        Object.defineProperty(navigator, 'mediaDevices', {
+          value: {
+            enumerateDevices: async () => []
+          },
+          writable: true,
+          configurable: true
+        });
+      } catch (e) {
+        console.warn("Failed to polyfill navigator.mediaDevices", e);
+        // Fallback assignment just in case
+        navigator.mediaDevices = {
+          enumerateDevices: async () => []
+        };
+      }
+    } else if (!navigator.mediaDevices.enumerateDevices) {
+      navigator.mediaDevices.enumerateDevices = async () => [];
+    }
+  </script>
+
+  <!-- Preconnect to critical origins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+  <link rel="preconnect" href="https://www.googleapis.com">
+  <link rel="preconnect" href="https://firestore.googleapis.com">
+  <link rel="preconnect" href="https://firebasestorage.googleapis.com">
+
+  <!-- Google Fonts — async to avoid render-blocking -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700&display=swap" media="print" onload="this.media='all'" />
+  <noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700&display=swap" />
+  </noscript>
+
+  <!-- Google Identity Services loaded dynamically via utils/loadGoogleIdentity.ts (only on /login) -->
+
+
+
+
+  <style>
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #F9F8F6;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #C6A87C;
+      border-radius: 3px;
+    }
+
+
+
+    .text-outline {
+      -webkit-text-stroke: 1px rgba(198, 168, 124, 0.3);
+      color: transparent;
+    }
+
+    .color-scheme-dark {
+      color-scheme: dark;
+    }
+
+    /* Autofill Fix for Dark Theme */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 30px #0f0f0f inset !important;
+      -webkit-text-fill-color: white !important;
+      -webkit-transition: background-color 5000s ease-in-out 0s;
+      transition: background-color 5000s ease-in-out 0s;
+    }
+
+    /* Wompi Mobile Fullscreen Overrides */
+    @media (max-width: 768px) {
+
+      /* Targeting standard Wompi container wrappers */
+      iframe[src*="wompi"],
+      #wompi-widget,
+      .pep-container,
+      .wompi-overlay,
+      #wompi-widget-container,
+      div[style*="z-index: 2147483647"] {
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: 100vw !important;
+        max-height: 100vh !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        top: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        right: 0 !important;
+        position: fixed !important;
+        transform: none !important;
+      }
+    }
+  </style>
+  <!-- importmap removed: Vite handles all module resolution in dev/build -->
+  <script type="module" crossorigin src="/rostrodorado-go/assets/index-Du8OkjQg.js"></script>
+  <link rel="modulepreload" crossorigin href="/rostrodorado-go/assets/vendor-Biw0N4QZ.js">
+  <link rel="modulepreload" crossorigin href="/rostrodorado-go/assets/framer-motion-B9d769da.js">
+  <link rel="stylesheet" crossorigin href="/rostrodorado-go/assets/index-Dh9-U5Kl.css">
+</head>
+
+<body class="bg-[#0a0a0a] text-charcoal font-sans antialiased selection:bg-gold selection:text-white">
+  <!-- Meta Pixel noscript fallback removed: handled by utils/pixel.ts after consent -->
+  <div id="root"></div>
+</body>
+
+</html>
