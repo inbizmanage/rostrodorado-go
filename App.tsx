@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './components/Home';
 import { LazyMotion, domAnimation } from 'framer-motion';
 
@@ -39,11 +39,12 @@ const AnalyticsTracker = () => {
 };
 
 const App: React.FC = () => {
+  const basename = window.location.hostname.includes('github.io') ? '/rostrodorado-go' : '/';
   return (
     <AuthProvider>
       <CartProvider>
         <LazyMotion features={domAnimation}>
-          <Router>
+          <Router basename={basename}>
             <AnalyticsTracker />
             <ToastContainer />
             <CookieBanner />
