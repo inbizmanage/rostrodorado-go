@@ -1,2 +1,0 @@
-import{aH as e,j as s}from"./vendor-Biw0N4QZ.js";import{N as a,P as o,F as t,L as r}from"./index-BaBDrx93.js";import"./framer-motion-B9d769da.js";const x=()=>(e.useEffect(()=>{window.scrollTo(0,0)},[]),s.jsxs("div",{className:"min-h-screen bg-base selection:bg-gold selection:text-white flex flex-col",children:[s.jsx(a,{}),s.jsxs("main",{className:"pt-20 flex-grow",children:[" ",s.jsx(o,{preview:!1})]}),s.jsx(t,{}),s.jsx(r,{})]}));export{x as default};
-//# sourceMappingURL=ProductsPage-B6G8PtKV.js.map
