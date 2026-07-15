@@ -10,6 +10,7 @@ import { useCart } from '../context/CartContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import Loader from './Loader';
+import { normalizeImageUrl } from '../utils/imageUrl';
 
 const ProductDetailsPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -32,8 +33,10 @@ const ProductDetailsPage: React.FC = () => {
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const data = { id: docSnap.id, ...docSnap.data() } as Product;
-                    setProduct(data);
-                    setActiveMedia({ type: 'image', url: data.image });
+                    // Normalizar URL de imagen (por si viene de Google Drive)
+                    const normalizedData = { ...data, image: normalizeImageUrl(data.image) };
+                    setProduct(normalizedData);
+                    setActiveMedia({ type: 'image', url: normalizedData.image });
 
                     // Meta Pixel: ViewContent
                     import('../utils/pixel').then(({ trackEvent }) => {

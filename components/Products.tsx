@@ -8,6 +8,7 @@ import { products as FALLBACK_PRODUCTS } from '../data/products';
 import { useCart } from '../context/CartContext';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
+import { normalizeImageUrl } from '../utils/imageUrl';
 
 interface ProductsProps {
     preview?: boolean;
@@ -37,7 +38,8 @@ const Products: React.FC<ProductsProps> = ({ preview = false }) => {
             clearTimeout(timeoutId);
             const productsData: Product[] = querySnapshot.docs.map((doc) => ({
                 id: doc.id,
-                ...doc.data()
+                ...doc.data(),
+                image: normalizeImageUrl((doc.data() as Product).image)
             } as Product));
 
             setProducts(productsData);
