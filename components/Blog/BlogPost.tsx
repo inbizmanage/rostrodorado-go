@@ -5,6 +5,7 @@ import { collection, query, where, getDocs, limit, doc, updateDoc, increment } f
 import { BlogPost as BlogPostType } from '../../types';
 import { ArrowLeft, Calendar, User } from 'lucide-react';
 import { m as motion } from 'framer-motion';
+import { normalizeImageUrl } from '../../utils/imageUrl';
 
 /**
  * Normalizes blog content for consistent rendering.
@@ -43,8 +44,12 @@ const BlogPost = () => {
                 );
                 const snapshot = await getDocs(q);
                 if (!snapshot.empty) {
-                    const docData = snapshot.docs[0].data();
-                    setPost({ id: snapshot.docs[0].id, ...docData } as BlogPostType);
+                    const docData = snapshot.docs[0].data() as BlogPostType;
+                    setPost({ 
+                        id: snapshot.docs[0].id, 
+                        ...docData,
+                        coverImage: normalizeImageUrl(docData.coverImage)
+                    } as BlogPostType);
 
                     // --- DYNAMIC SEO INJECTION (Basic Client Side) ---
                     document.title = `${docData.title} | Rostro Dorado Clinic`;

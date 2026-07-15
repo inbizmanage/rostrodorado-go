@@ -5,6 +5,7 @@ import { db } from '../../firebase';
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { BlogPost } from '../../types';
 import { ArrowRight } from 'lucide-react';
+import { normalizeImageUrl } from '../../utils/imageUrl';
 
 const BlogPage = () => {
     const [posts, setPosts] = useState<BlogPost[]>([]);
@@ -18,10 +19,14 @@ const BlogPage = () => {
                     where('published', '==', true)
                 );
                 const snapshot = await getDocs(q);
-                const fetchedPosts = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                })) as BlogPost[];
+                const fetchedPosts = snapshot.docs.map(doc => {
+                    const data = doc.data() as BlogPost;
+                    return {
+                        id: doc.id,
+                        ...data,
+                        coverImage: normalizeImageUrl(data.coverImage)
+                    };
+                }) as BlogPost[];
                 setPosts(fetchedPosts);
             } catch (error) {
                 console.error("Error fetching blog posts:", error);
