@@ -629,4 +629,40 @@ const LegendDot: React.FC<{ color: string; label: string }> = ({ color, label })
     </div>
 );
 
-export default AdminAnalytics;
+class AnalyticsErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: any}> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("Analytics Error Boundary caught an error", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-8 bg-red-950/20 border border-red-500/30 rounded-lg text-white m-4 font-sans">
+          <h2 className="text-xl font-bold text-red-400 mb-2">⚠️ Error en el panel de Analíticas</h2>
+          <p className="text-sm text-white/70 mb-4">
+            Ocurrió un error inesperado al renderizar los datos de analíticas. Por favor copia y reporta el siguiente error:
+          </p>
+          <pre className="text-xs font-mono bg-black/60 p-4 rounded border border-white/10 overflow-auto max-w-full text-red-300 whitespace-pre-wrap">
+            {this.state.error?.stack || this.state.error?.message || String(this.state.error)}
+          </pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const AdminAnalyticsWithBoundary: React.FC = () => (
+    <AnalyticsErrorBoundary>
+        <AdminAnalytics />
+    </AnalyticsErrorBoundary>
+);
+
+export default AdminAnalyticsWithBoundary;
+

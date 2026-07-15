@@ -1,0 +1,10 @@
+# Ignore Go backend files to prevent Vercel from auto-detecting multiple services
+main.go
+go.mod
+go.sum
+*.go
+seed_turso.py
+add_admin_turso.py
+create_analytics_tables.py
+check_users.py
+scripts/

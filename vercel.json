@@ -1,0 +1,27 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/admin", "destination": "/" },
+    { "source": "/admin/:path*", "destination": "/" },
+    { "source": "/login", "destination": "/" },
+    { "source": "/login/:path*", "destination": "/" },
+    { "source": "/register", "destination": "/" },
+    { "source": "/productos", "destination": "/" },
+    { "source": "/productos/:path*", "destination": "/" },
+    { "source": "/products", "destination": "/" },
+    { "source": "/products/:path*", "destination": "/" },
+    { "source": "/cart", "destination": "/" },
+    { "source": "/checkout", "destination": "/" },
+    { "source": "/profile", "destination": "/" },
+    { "source": "/mis-pedidos", "destination": "/" },
+    { "source": "/blog", "destination": "/" },
+    { "source": "/blog/:path*", "destination": "/" },
+    { "source": "/kiosk", "destination": "/" },
+    { "source": "/kiosko/:path*", "destination": "/" },
+    { "source": "/order-chat/:path*", "destination": "/" },
+    { "source": "/terminos-y-condiciones", "destination": "/" },
+    { "source": "/politica-de-privacidad", "destination": "/" },
+    { "source": "/politica-de-envios", "destination": "/" },
+    { "source": "/politica-devoluciones", "destination": "/" }
+  ]
+}

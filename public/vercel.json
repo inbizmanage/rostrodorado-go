@@ -1,0 +1,23 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/admin", "destination": "/" },
+    { "source": "/admin/:path*", "destination": "/" },
+    { "source": "/login", "destination": "/" },
+    { "source": "/login/:path*", "destination": "/" },
+    { "source": "/register", "destination": "/" },
+    { "source": "/products", "destination": "/" },
+    { "source": "/product/:path*", "destination": "/" },
+    { "source": "/cart", "destination": "/" },
+    { "source": "/checkout", "destination": "/" },
+    { "source": "/profile", "destination": "/" },
+    { "source": "/blog", "destination": "/" },
+    { "source": "/blog/:path*", "destination": "/" },
+    { "source": "/kiosk", "destination": "/" },
+    { "source": "/order-chat/:path*", "destination": "/" },
+    { "source": "/politica-privacidad", "destination": "/" },
+    { "source": "/politica-reembolso", "destination": "/" },
+    { "source": "/terminos-condiciones", "destination": "/" },
+    { "source": "/politica-envios", "destination": "/" }
+  ]
+}

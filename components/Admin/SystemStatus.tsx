@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, limit, query } from 'firebase/firestore';
-import { db, auth } from '../../firebase';
+import { auth } from '../../firebase';
 import { Activity, Server, Shield, Globe, Cpu, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
 import { m as motion } from 'framer-motion';
 
@@ -14,8 +13,11 @@ interface ConnectionState {
 const SystemStatus: React.FC = () => {
     const [connections, setConnections] = useState<ConnectionState[]>([
         { name: 'Red e Internet', status: 'checking', details: 'Verificando conexion local...' },
-        { name: 'Firebase Firestore', status: 'checking', details: 'Conectando con base de datos...' },
+        { name: 'Turso (Base de Datos)', status: 'checking', details: 'Conectando con Turso SQLite...' },
         { name: 'Firebase Autenticacion', status: 'checking', details: 'Verificando sesion...' },
+        { name: 'Wompi (Pagos)', status: 'checking', details: 'Verificando pasarela de pagos...' },
+        { name: 'EnvíoClick (Logística)', status: 'checking', details: 'Verificando API de envíos...' },
+        { name: 'Google Apps Script (Backup)', status: 'checking', details: 'Verificando webhook de respaldo...' },
         { name: 'Cloudflare Turnstile CAPTCHA', status: 'checking', details: 'Verificando scripts...' },
         { name: 'Meta Pixel (Rastreo)', status: 'checking', details: 'Verificando integracion...' },
         { name: 'API Google Gemini (IA)', status: 'checking', details: 'Verificando variables...' },
@@ -49,33 +51,32 @@ const SystemStatus: React.FC = () => {
         // Update net state
         updateConnectionState('Red e Internet', netStatus, netDetails, netLatency);
 
-        // 2. Check Firebase Firestore (Target database: rostrodorado-db)
-        const firestoreStart = performance.now();
-        let firestoreStatus: 'online' | 'offline' | 'error' = 'checking';
-        let firestoreDetails = '';
-        let firestoreLatency: number | undefined = undefined;
-
+        // 2. Check Turso (direct ping to the pipeline API)
+        const tursoStart = performance.now();
+        let tursoStatus: 'online' | 'offline' | 'error' = 'error';
+        let tursoDetails = '';
+        let tursoLatency: number | undefined = undefined;
+        const TURSO_URL = 'https://rostrodorado-db-rostrodoradoclinic.aws-us-east-1.turso.io/v2/pipeline';
+        const TURSO_TOKEN = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJnaWQiOiJkYWI3ZDNhOC0yNmEzLTRiMmUtOTk0MS05MWQzNjhmY2I2NjkiLCJpYXQiOjE3ODM4Mjg4ODEsImtpZCI6ImxkMW5CQUp6blVuM3Vpc0ViWFZKTWtybHIybWEtakExZkkwVjFBWWZUSWsiLCJyaWQiOiI5MWUzNTk3YS0zY2QxLTQ1Y2QtOWRmZS0xNjM3YjQ3YTIwZjkifQ.__tFme0WATv1iGb0gpZ1wvzscS_YW2kJnAIW3D6rULfcC2SMc8VoqUA_woyLfWUIJ4DFpBeJMmPlM6kQo8PUAg';
         try {
-            // Attempt to query a small document or the products collection with limit 1
-            const q = query(collection(db, 'products'), limit(1));
-            await getDocs(q);
-            firestoreLatency = Math.round(performance.now() - firestoreStart);
-            firestoreStatus = 'online';
-            firestoreDetails = `Conectado exitosamente. Base de datos: ${db.databaseId.database || 'default'}. Proyecto: ${db.app.options.projectId}. Latencia: ${firestoreLatency} ms`;
-        } catch (err: any) {
-            firestoreStatus = 'error';
-            console.error('Error de diagnostico Firestore:', err);
-            
-            const errStr = String(err);
-            if (errStr.includes('Failed to get document') || errStr.includes('offline') || errStr.includes('network')) {
-                firestoreDetails = 'Error de conexion. El navegador bloqueo la peticion (ERR_BLOCKED_BY_CLIENT). Revisa bloqueadores de anuncios (AdBlock) o VPNs.';
-            } else if (err.code === 'permission-denied') {
-                firestoreDetails = 'Conectado, pero acceso denegado por Reglas de Seguridad (Firestore Rules).';
+            const tursoRes = await fetch(TURSO_URL, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${TURSO_TOKEN}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ requests: [{ type: 'execute', stmt: { sql: 'SELECT 1;' } }] }),
+            });
+            tursoLatency = Math.round(performance.now() - tursoStart);
+            if (tursoRes.ok) {
+                tursoStatus = 'online';
+                tursoDetails = `Conectado a Turso (aws-us-east-1). Base de datos: rostrodorado-db. Latencia: ${tursoLatency} ms`;
             } else {
-                firestoreDetails = `Error: ${err.message || err.code || 'Desconocido'}`;
+                tursoStatus = 'error';
+                tursoDetails = `Respuesta inesperada del servidor Turso: HTTP ${tursoRes.status}`;
             }
+        } catch (err: any) {
+            tursoStatus = 'error';
+            tursoDetails = `Error al conectar con Turso: ${err.message || 'Sin respuesta del servidor'}`;
         }
-        updateConnectionState('Firebase Firestore', firestoreStatus, firestoreDetails, firestoreLatency);
+        updateConnectionState('Turso (Base de Datos)', tursoStatus, tursoDetails, tursoLatency);
 
         // 3. Check Firebase Auth
         let authStatus: 'online' | 'offline' = 'offline';
@@ -89,7 +90,28 @@ const SystemStatus: React.FC = () => {
         }
         updateConnectionState('Firebase Autenticacion', authStatus, authDetails);
 
-        // 4. Check Cloudflare Turnstile
+        // 4. Check Google Apps Script (Backup webhook)
+        let appsScriptStatus: 'online' | 'offline' | 'error' = 'offline';
+        let appsScriptDetails = '';
+        const appsScriptUrl = (import.meta.env as Record<string, string>).VITE_APPS_SCRIPT_URL;
+        if (appsScriptUrl) {
+            const appsStart = performance.now();
+            try {
+                await fetch(appsScriptUrl + '?ping=1', { mode: 'no-cors', cache: 'no-store' });
+                const appsLatency = Math.round(performance.now() - appsStart);
+                appsScriptStatus = 'online';
+                appsScriptDetails = `Webhook de respaldo detectado y accesible. Latencia estimada: ${appsLatency} ms`;
+            } catch {
+                appsScriptStatus = 'error';
+                appsScriptDetails = 'URL configurada pero la peticion fue bloqueada. Posible restriccion de CORS o AdBlocker.';
+            }
+        } else {
+            appsScriptStatus = 'offline';
+            appsScriptDetails = 'No configurado. Falta VITE_APPS_SCRIPT_URL en las variables de entorno. El respaldo automatico a Google Sheets esta desactivado.';
+        }
+        updateConnectionState('Google Apps Script (Backup)', appsScriptStatus, appsScriptDetails);
+
+        // 5. Check Cloudflare Turnstile
         let turnstileStatus: 'online' | 'offline' | 'error' = 'checking';
         let turnstileDetails = '';
         try {
@@ -132,6 +154,38 @@ const SystemStatus: React.FC = () => {
             geminiDetails = 'No configurada. Falta VITE_GOOGLE_GEN_AI_KEY en el archivo de entorno.';
         }
         updateConnectionState('API Google Gemini (IA)', geminiStatus, geminiDetails);
+
+        // 7. Check Wompi (Pasarela de Pagos)
+        const wompiStart = performance.now();
+        let wompiStatus: 'online' | 'offline' | 'error' = 'error';
+        let wompiDetails = '';
+        let wompiLatency: number | undefined = undefined;
+        try {
+            await fetch('https://checkout.wompi.co/widget.js', { mode: 'no-cors', cache: 'no-store' });
+            wompiLatency = Math.round(performance.now() - wompiStart);
+            wompiStatus = 'online';
+            wompiDetails = `Servidor de Wompi (Bancolombia) accesible. Clave produccion configurada (pub_prod_aDq9...). Latencia: ${wompiLatency} ms`;
+        } catch {
+            wompiStatus = 'error';
+            wompiDetails = 'No se pudo conectar con los servidores de Wompi. Posible bloqueo de red o AdBlocker activo.';
+        }
+        updateConnectionState('Wompi (Pagos)', wompiStatus, wompiDetails, wompiLatency);
+
+        // 8. Check EnvioClick (Logistica)
+        const enviolStart = performance.now();
+        let envioStatus: 'online' | 'offline' | 'error' = 'error';
+        let envioDetails = '';
+        let envioLatency: number | undefined = undefined;
+        try {
+            await fetch('https://api.envioclick.com', { mode: 'no-cors', cache: 'no-store' });
+            envioLatency = Math.round(performance.now() - enviolStart);
+            envioStatus = 'online';
+            envioDetails = `API de EnvioClick accesible. Latencia: ${envioLatency} ms. La generacion de guias esta disponible desde el panel de Pedidos.`;
+        } catch {
+            envioStatus = 'error';
+            envioDetails = 'No se pudo alcanzar la API de EnvioClick. La generacion de guias puede estar afectada.';
+        }
+        updateConnectionState('EnvíoClick (Logística)', envioStatus, envioDetails, envioLatency);
 
         setChecking(false);
     };

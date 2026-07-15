@@ -33,3 +33,5 @@ db_repo/
 backend/pb_data/
 backend/db_repo/
 
+.vercel
+.env*
