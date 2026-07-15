@@ -52,8 +52,11 @@ const Products: React.FC<ProductsProps> = ({ preview = false }) => {
         }
     };
 
+    // Flag temporal para ocultar/mostrar productos en la página web
+    const OCULTAR_PRODUCTOS = true;
+
     // Calculate unique categories from available products
-    const availableProducts = products.filter(p => p.stock && p.stock > 0);
+    const availableProducts = OCULTAR_PRODUCTOS ? [] : products.filter(p => p.stock && p.stock > 0);
 
     // Get unique leaf categories and create a map to full category paths
     const categoryMap = availableProducts.reduce((acc, product) => {
@@ -125,10 +128,13 @@ const Products: React.FC<ProductsProps> = ({ preview = false }) => {
                 <section id="productos" className="bg-[#f9f8f6] py-24 relative overflow-hidden min-h-[60vh] flex items-center justify-center">
                     <div className="container mx-auto px-6 relative z-10 text-center max-w-2xl">
                         <h2 className="font-serif text-2xl md:text-3xl text-black mb-3">
-                            Catálogo en Preparación
+                            {OCULTAR_PRODUCTOS ? 'Catálogo en Mantenimiento Temporal' : 'Catálogo en Preparación'}
                         </h2>
                         <p className="font-sans text-gray-500 text-sm font-light leading-relaxed mb-6">
-                            Nuestra tienda virtual está preparándose para ofrecerte la mejor experiencia de compra. Muy pronto podrás ver y adquirir todos nuestros productos dermatológicos desde aquí.
+                            {OCULTAR_PRODUCTOS 
+                              ? 'Estamos actualizando nuestro inventario de productos. Por favor regresa más tarde para ver las novedades de Rostro Dorado Clinic.'
+                              : 'Nuestra tienda virtual está preparándose para ofrecerte la mejor experiencia de compra. Muy pronto podrás ver y adquirir todos nuestros productos dermatológicos desde aquí.'
+                            }
                         </p>
                         <Link
                             to="/"
